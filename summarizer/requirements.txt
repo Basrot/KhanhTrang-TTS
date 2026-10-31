@@ -1,0 +1,7 @@
+trafilatura==1.12.2
+transformers==4.46.3
+torch>=2.1.0
+sentencepiece==0.2.0
+# Lưu ý: torch cài theo hướng dẫn tại https://pytorch.org/get-started/locally/
+# để lấy đúng bản có hỗ trợ CUDA khớp driver GPU của bạn (RTX 2060 Super),
+# nếu không pip có thể cài bản CPU-only mặc định.

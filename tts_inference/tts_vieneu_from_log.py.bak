@@ -1,0 +1,106 @@
+"""
+ĐỌC BẢN TÓM TẮT MỚI NHẤT BẰNG VieNeu-TTS (chạy trong venv_tts riêng)
+
+"""
+
+import argparse
+import json
+import re
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+LOG_PATH = ROOT / "summarizer" / "data" / "summaries_log.jsonl"
+OUTPUT_DIR = ROOT / "outputs"
+
+# Clip Khánh Trang làm giọng mẫu (chỉ cần audio, không cần transcript)
+REF_AUDIO = str(ROOT / "data" / "f5tts_dataset" / "wavs" / "clip_128.wav")
+
+
+def slugify(text: str, max_len: int = 60) -> str:
+    text = text.lower().strip()
+    text = re.sub(r"[^a-z0-9àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡ"
+                  r"ùúụủũưừứựửữỳýỵỷỹđ\s-]", "", text)
+    text = re.sub(r"\s+", "-", text)
+    text = re.sub(r"-{2,}", "-", text)
+    return text[:max_len].strip("-") or "ban-tin"
+
+
+def read_latest_record(log_path: Path) -> dict:
+    if not log_path.exists():
+        print(f"[LỖI] Không thấy {log_path}. Chạy pipeline.py (venv tóm tắt) trước.",
+              file=sys.stderr)
+        sys.exit(1)
+
+    last_line = None
+    with open(log_path, "r", encoding="utf-8") as f:
+        for line in f:
+            if line.strip():
+                last_line = line
+
+    if last_line is None:
+        print(f"[LỖI] File {log_path} đang rỗng.", file=sys.stderr)
+        sys.exit(1)
+
+    return json.loads(last_line)
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--text", type=str, help="Văn bản tự gõ (bỏ qua file log)")
+    args = parser.parse_args()
+
+    if args.text:
+        text, title = args.text, "van-ban-tu-go"
+    else:
+        record = read_latest_record(LOG_PATH)
+        text, title = record["summary"], record.get("title") or "ban-tin"
+        print(f"[INFO] Đọc bản tóm tắt của: {title}")
+        print(f"[INFO] Nội dung: {text}")
+
+    if not Path(REF_AUDIO).exists():
+        print(f"[LỖI] Không thấy file audio mẫu: {REF_AUDIO}", file=sys.stderr)
+        sys.exit(1)
+
+        from vieneu import Vieneu
+
+    print("[INFO] Đang load VieNeu-TTS AFTER...")
+
+    tts = Vieneu(
+        mode="v3turbo",
+        backbone_repo=r"C:\Khanhtrang-tts\VieNeu-TTS\finetune\output\khanhtrang_v3_lora_r8\merged",
+        model_subfolder="update",
+        backend="pytorch",
+        device="cuda"
+    )
+
+    print("[INFO] Đang tổng hợp giọng đọc...")
+    audio = tts.infer(text, ref_audio=REF_AUDIO, denoise=True)
+
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    out_path = OUTPUT_DIR / (slugify(title) + ".wav")
+
+    tts.save(audio, str(out_path))
+    print(f"\n[HOÀN TẤT] File audio: {out_path}")
+
+    print("[INFO] Đang load VieNeu-TTS AFTER...")
+
+tts = Vieneu(
+    mode="v3turbo",
+    backbone_repo=r"C:\Khanhtrang-tts\VieNeu-TTS\finetune\output\khanhtrang_v3_lora_r8\merged",
+    model_subfolder="update",
+    backend="pytorch",
+    device="cuda"
+)
+
+    print("[INFO] Đang tổng hợp giọng đọc...")
+    audio = tts.infer(text, ref_audio=REF_AUDIO, denoise=True)
+
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    out_path = OUTPUT_DIR / (slugify(title) + ".wav")
+    tts.save(audio, str(out_path))
+    print(f"\n[HOÀN TẤT] File audio: {out_path}")
+
+
+if __name__ == "__main__":
+    main()

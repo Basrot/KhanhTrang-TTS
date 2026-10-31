@@ -1,0 +1,30 @@
+# Python environments
+venv/
+venv_tts/
+venv_f5train/
+.venv/
+**/venv/
+**/.venv/
+__pycache__/
+*.pyc
+
+# Models
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+
+# Audio
+*.wav
+*.mp3
+*.flac
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Generated data
+outputs/
+logs/
+*.log

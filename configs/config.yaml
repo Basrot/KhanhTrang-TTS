@@ -1,0 +1,45 @@
+# ============================================================
+# CẤU HÌNH PIPELINE CHUẨN BỊ DATASET GIỌNG ĐỌC (F5-TTS fine-tune)
+# ============================================================
+
+audio:
+  sample_rate: 24000     # F5-TTS yêu cầu 24kHz
+  channels: 1            # mono
+  sample_width: 2        # 16-bit PCM
+
+segmentation:
+  # Nếu file gốc NGẮN HƠN ngưỡng này (giây) -> giữ nguyên cả file,
+  # KHÔNG cắt nhỏ nữa (ví dụ file chỉ 26s thì để nguyên 1 clip).
+  min_duration_to_split_sec: 15.0
+
+  # Độ dài mong muốn của 1 đoạn (clip) sau khi cắt, phù hợp GPU 8GB (2060 Super)
+  min_segment_sec: 3.0
+  max_segment_sec: 10.0
+
+  # Sau khi cắt, đoạn nào ngắn hơn mức này thì loại bỏ (quá ngắn, vô nghĩa để train)
+  drop_shorter_than_sec: 1.0
+
+  # Tham số phát hiện khoảng lặng (silence) để cắt tại chỗ ngắt câu tự nhiên,
+  # tránh cắt ngang từ đang nói
+  min_silence_len_ms: 300      # khoảng lặng tối thiểu để coi là điểm ngắt
+  silence_thresh_offset_db: -40 # ngưỡng im lặng = dBFS trung bình của file + offset này
+  keep_silence_ms: 150         # chừa lại 1 chút khoảng lặng ở đầu/cuối clip cho tự nhiên
+
+paths:
+  raw_dir: ../data/raw
+  resampled_dir: ../data/interim/resampled
+  segments_dir: ../data/processed/segments
+  manifest_csv: ../data/processed/segments_manifest.csv
+  log_file: ../logs/prepare_dataset.log
+
+# Các đuôi file được chấp nhận trong thư mục raw/ (audio hoặc video đều được,
+# script sẽ tự tách audio nếu là video)
+accepted_extensions:
+  - .mp3
+  - .wav
+  - .m4a
+  - .aac
+  - .flac
+  - .mp4
+  - .mkv
+  - .mov
